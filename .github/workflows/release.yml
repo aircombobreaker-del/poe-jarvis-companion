@@ -83,8 +83,8 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "PoE Jarvis Companion v1.0.0 (Windows & macOS)"
+          tag_name: v1.0.1
+          name: "PoE Jarvis Companion v1.0.1 (Windows & macOS)"
           files: |
             release_assets/PoE_Jarvis_Companion_Windows/PoE_Jarvis_Companion_Windows.zip
             release_assets/PoE_Jarvis_Companion_macOS/PoE_Jarvis_Companion_macOS.zip

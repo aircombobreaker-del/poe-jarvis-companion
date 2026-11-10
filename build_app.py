@@ -99,10 +99,16 @@ def build():
         app_bundle = os.path.join("dist", f"{APP_BUNDLE_NAME}.app")
         if os.path.exists(app_bundle):
             patch_macos_info_plist(app_bundle)
-            zip_base = os.path.join("dist", f"{APP_BUNDLE_NAME}_macOS")
-            shutil.make_archive(zip_base, "zip", "dist", f"{APP_BUNDLE_NAME}.app")
-            print(f"\n[SUCCESS] Built macOS app bundle: dist/{APP_BUNDLE_NAME}.app")
-            print(f"[SUCCESS] Created macOS zip archive: {zip_base}.zip")
+            print("[Build] Re-signing macOS bundle with ad-hoc signature...")
+            subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", app_bundle])
+
+            zip_path = os.path.join("dist", f"{APP_BUNDLE_NAME}_macOS.zip")
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+            print("[Build] Packaging with ditto to preserve macOS symlinks & code signature...")
+            subprocess.check_call(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app_bundle, zip_path])
+            print(f"\n[SUCCESS] Built and signed macOS app bundle: {app_bundle}")
+            print(f"[SUCCESS] Created macOS zip archive via ditto: {zip_path}")
     elif system == "Windows":
         exe_folder = os.path.join("dist", APP_BUNDLE_NAME)
         if os.path.exists(exe_folder):
