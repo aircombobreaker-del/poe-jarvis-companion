@@ -5,6 +5,14 @@ Launches the native PyQt6 Desktop App (uses modern Metal/Direct3D hardware rende
 
 import sys
 
+# Ensure UTF-8 console output on Windows (prevents cp1252 UnicodeEncodeError on Thai/Emoji print)
+for _stream in (sys.stdout, sys.stderr):
+    if _stream and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 
 def main():
     if "--cli" in sys.argv:

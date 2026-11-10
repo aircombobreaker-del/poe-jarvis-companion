@@ -2,12 +2,18 @@ name: Build Windows & macOS Releases
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
 
 jobs:
   build-windows:
@@ -40,6 +46,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
+        uses: actions/setup-python@v5
+        if: false
+      - name: Checkout repository code
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
@@ -64,7 +73,6 @@ jobs:
 
   release:
     needs: [build-windows, build-macos]
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -75,6 +83,8 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.0
+          name: "PoE Jarvis Companion v1.0.0 (Windows & macOS)"
           files: |
             release_assets/PoE_Jarvis_Companion_Windows/PoE_Jarvis_Companion_Windows.zip
             release_assets/PoE_Jarvis_Companion_macOS/PoE_Jarvis_Companion_macOS.zip

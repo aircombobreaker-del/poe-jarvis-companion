@@ -10,6 +10,13 @@ import shutil
 import subprocess
 import sys
 
+# Ensure UTF-8 console output on Windows CI runners (prevents cp1252 UnicodeEncodeError)
+for _stream in (sys.stdout, sys.stderr):
+    if _stream and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 APP_BUNDLE_NAME = "PoE_Jarvis_Companion"
 
@@ -24,7 +31,7 @@ def ensure_pyinstaller():
 
 def patch_macos_info_plist(app_path: str):
     """
-    Adds NSMicrophoneUsageDescription and AppleEvents/ScreenCapture descriptions to macOS Info.plist
+    Adds NSMicrophoneUsageDescription and NSScreenCaptureUsageDescription to macOS Info.plist
     so macOS grants microphone and screen recording permissions to the standalone .app bundle.
     """
     plist_path = os.path.join(app_path, "Contents", "Info.plist")
@@ -94,17 +101,15 @@ def build():
             patch_macos_info_plist(app_bundle)
             zip_base = os.path.join("dist", f"{APP_BUNDLE_NAME}_macOS")
             shutil.make_archive(zip_base, "zip", "dist", f"{APP_BUNDLE_NAME}.app")
-            print(f"\n✅ สร้างไฟล์โปรแกรมสำหรับ macOS สำเร็จแล้ว!")
-            print(f"   • แอปพลิเคชัน: dist/{APP_BUNDLE_NAME}.app")
-            print(f"   • ไฟล์ ZIP สำหรับส่งให้เพื่อน: {zip_base}.zip")
+            print(f"\n[SUCCESS] Built macOS app bundle: dist/{APP_BUNDLE_NAME}.app")
+            print(f"[SUCCESS] Created macOS zip archive: {zip_base}.zip")
     elif system == "Windows":
         exe_folder = os.path.join("dist", APP_BUNDLE_NAME)
         if os.path.exists(exe_folder):
             zip_base = os.path.join("dist", f"{APP_BUNDLE_NAME}_Windows")
             shutil.make_archive(zip_base, "zip", "dist", APP_BUNDLE_NAME)
-            print(f"\n✅ สร้างไฟล์โปรแกรมสำหรับ Windows สำเร็จแล้ว!")
-            print(f"   • โฟลเดอร์โปรแกรม (.exe): dist/{APP_BUNDLE_NAME}/{APP_BUNDLE_NAME}.exe")
-            print(f"   • ไฟล์ ZIP สำหรับส่งให้เพื่อน: {zip_base}.zip")
+            print(f"\n[SUCCESS] Built Windows executable: dist/{APP_BUNDLE_NAME}/{APP_BUNDLE_NAME}.exe")
+            print(f"[SUCCESS] Created Windows zip archive: {zip_base}.zip")
 
 
 if __name__ == "__main__":
