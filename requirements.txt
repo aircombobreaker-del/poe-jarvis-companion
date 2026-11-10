@@ -1,0 +1,10 @@
+google-genai>=1.0.0
+edge-tts>=6.1.9
+SpeechRecognition>=3.10.0
+sounddevice>=0.5.0
+soundfile>=0.12.1
+numpy>=1.26.0
+mss>=9.0.1
+Pillow>=10.0.0
+PyQt6>=6.6.0
+requests>=2.31.0

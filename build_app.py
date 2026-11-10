@@ -1,0 +1,111 @@
+"""
+One-command packaging script for PoE Jarvis Companion (Windows .exe & macOS .app).
+Usage:
+    python build_app.py
+"""
+import os
+import platform
+import plistlib
+import shutil
+import subprocess
+import sys
+
+
+APP_BUNDLE_NAME = "PoE_Jarvis_Companion"
+
+
+def ensure_pyinstaller():
+    try:
+        import PyInstaller  # noqa: F401
+    except ImportError:
+        print("[Build] Installing pyinstaller...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
+
+
+def patch_macos_info_plist(app_path: str):
+    """
+    Adds NSMicrophoneUsageDescription and AppleEvents/ScreenCapture descriptions to macOS Info.plist
+    so macOS grants microphone and screen recording permissions to the standalone .app bundle.
+    """
+    plist_path = os.path.join(app_path, "Contents", "Info.plist")
+    if not os.path.exists(plist_path):
+        return
+    try:
+        with open(plist_path, "rb") as f:
+            data = plistlib.load(f)
+        data["NSMicrophoneUsageDescription"] = (
+            "PoE Jarvis Companion ต้องการใช้ไมโครโฟนเพื่อรับคำสั่งเสียงภาษาไทยขณะเล่นเกม"
+        )
+        data["NSScreenCaptureUsageDescription"] = (
+            "PoE Jarvis Companion ต้องการแคปภาพหน้าจอเมื่อคุณสั่งให้ช่วยวิเคราะห์ไอเทมหรือบอส"
+        )
+        data["CFBundleDisplayName"] = "PoE Jarvis Companion"
+        with open(plist_path, "wb") as f:
+            plistlib.dump(data, f)
+        print(f"[Build] Patched macOS microphone & screen permissions in {plist_path}")
+    except Exception as e:
+        print(f"[Build Warning] Could not patch Info.plist: {e}")
+
+
+def build():
+    ensure_pyinstaller()
+
+    for folder in ["build", "dist"]:
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--noconfirm",
+        "--clean",
+        "--windowed",
+        "--name",
+        APP_BUNDLE_NAME,
+        "--collect-data",
+        "soundfile",
+        "--collect-binaries",
+        "soundfile",
+        "--collect-data",
+        "sounddevice",
+        "--collect-binaries",
+        "sounddevice",
+        "--hidden-import",
+        "edge_tts",
+        "--hidden-import",
+        "speech_recognition",
+        "--hidden-import",
+        "mss",
+        "--hidden-import",
+        "PIL",
+        "--hidden-import",
+        "google.genai",
+        "main.py",
+    ]
+
+    print("[Build] Running PyInstaller:", " ".join(cmd))
+    subprocess.check_call(cmd)
+
+    system = platform.system()
+    if system == "Darwin":
+        app_bundle = os.path.join("dist", f"{APP_BUNDLE_NAME}.app")
+        if os.path.exists(app_bundle):
+            patch_macos_info_plist(app_bundle)
+            zip_base = os.path.join("dist", f"{APP_BUNDLE_NAME}_macOS")
+            shutil.make_archive(zip_base, "zip", "dist", f"{APP_BUNDLE_NAME}.app")
+            print(f"\n✅ สร้างไฟล์โปรแกรมสำหรับ macOS สำเร็จแล้ว!")
+            print(f"   • แอปพลิเคชัน: dist/{APP_BUNDLE_NAME}.app")
+            print(f"   • ไฟล์ ZIP สำหรับส่งให้เพื่อน: {zip_base}.zip")
+    elif system == "Windows":
+        exe_folder = os.path.join("dist", APP_BUNDLE_NAME)
+        if os.path.exists(exe_folder):
+            zip_base = os.path.join("dist", f"{APP_BUNDLE_NAME}_Windows")
+            shutil.make_archive(zip_base, "zip", "dist", APP_BUNDLE_NAME)
+            print(f"\n✅ สร้างไฟล์โปรแกรมสำหรับ Windows สำเร็จแล้ว!")
+            print(f"   • โฟลเดอร์โปรแกรม (.exe): dist/{APP_BUNDLE_NAME}/{APP_BUNDLE_NAME}.exe")
+            print(f"   • ไฟล์ ZIP สำหรับส่งให้เพื่อน: {zip_base}.zip")
+
+
+if __name__ == "__main__":
+    build()

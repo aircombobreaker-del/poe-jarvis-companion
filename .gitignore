@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+*.mp3
+config.json
+chat_memory*.json
+.DS_Store
+build/
+dist/
+*.spec
